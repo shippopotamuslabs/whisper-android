@@ -8,14 +8,14 @@ import kotlinx.coroutines.sync.withLock
 import kotlinx.coroutines.withContext
 
 /**
- * whisper.cpp-backed transcription engine. All native calls are serialized through a
- * mutex because a whisper context is not thread-safe.
+ * [WhisperEngine] implementation over the whisper.cpp JNI bridge. All native calls are
+ * serialized through a mutex because a whisper context is not thread-safe.
  */
 class JniWhisperInference internal constructor(
     private val nativeBridge: WhisperNativeBridge,
     private val processorCountProvider: ProcessorCountProvider,
     private val dispatcher: CoroutineDispatcher,
-) {
+) : WhisperEngine {
     constructor() : this(
         nativeBridge = JniWhisperNativeBridge,
         processorCountProvider = RuntimeProcessorCountProvider,
@@ -23,14 +23,18 @@ class JniWhisperInference internal constructor(
     )
 
     private val mutex = Mutex()
-    private var contextPtr: Long = 0L
 
-    suspend fun initialize(modelPath: String) {
+    @Volatile
+    private var contextPtr: Long = 0L
+    private var params: WhisperParams = WhisperParams()
+
+    override suspend fun load(modelPath: String, params: WhisperParams) {
         mutex.withLock {
             if (contextPtr != 0L) {
                 closeLocked()
             }
 
+            this.params = params
             contextPtr = withContext(dispatcher) {
                 nativeBridge.initContext(modelPath)
             }
@@ -38,7 +42,7 @@ class JniWhisperInference internal constructor(
         }
     }
 
-    suspend fun transcribe(samples: FloatArray): String {
+    override suspend fun transcribe(samples: FloatArray): String {
         return mutex.withLock {
             val ptr = contextPtr
             check(ptr != 0L) { "Whisper context is not initialized." }
@@ -48,12 +52,16 @@ class JniWhisperInference internal constructor(
                     contextPtr = ptr,
                     samples = samples,
                     numThreads = resolveThreadCount(),
+                    language = params.language,
+                    translate = params.translate,
                 )
             }
         }
     }
 
-    suspend fun close() {
+    override fun isLoaded(): Boolean = contextPtr != 0L
+
+    override suspend fun close() {
         mutex.withLock {
             closeLocked()
         }
@@ -70,6 +78,8 @@ class JniWhisperInference internal constructor(
     }
 
     private fun resolveThreadCount(): Int {
+        params.threads?.let { return it.coerceAtLeast(1) }
+
         val halfProcessors = processorCountProvider.availableProcessors() / 2
         return halfProcessors.coerceAtLeast(1).coerceAtMost(MAX_THREADS)
     }
@@ -87,6 +97,8 @@ class JniWhisperInference internal constructor(
             contextPtr: Long,
             samples: FloatArray,
             numThreads: Int,
+            language: String,
+            translate: Boolean,
         ): String
 
         @Keep
@@ -97,7 +109,15 @@ class JniWhisperInference internal constructor(
 
 internal interface WhisperNativeBridge {
     fun initContext(modelPath: String): Long
-    fun processAudio(contextPtr: Long, samples: FloatArray, numThreads: Int): String
+
+    fun processAudio(
+        contextPtr: Long,
+        samples: FloatArray,
+        numThreads: Int,
+        language: String,
+        translate: Boolean,
+    ): String
+
     fun freeContext(contextPtr: Long)
 }
 
@@ -108,11 +128,19 @@ internal object JniWhisperNativeBridge : WhisperNativeBridge {
 
     override fun initContext(modelPath: String): Long = JniWhisperInference.initContext(modelPath)
 
-    override fun processAudio(contextPtr: Long, samples: FloatArray, numThreads: Int): String {
+    override fun processAudio(
+        contextPtr: Long,
+        samples: FloatArray,
+        numThreads: Int,
+        language: String,
+        translate: Boolean,
+    ): String {
         return JniWhisperInference.processAudio(
             contextPtr = contextPtr,
             samples = samples,
             numThreads = numThreads,
+            language = language,
+            translate = translate,
         )
     }
 
