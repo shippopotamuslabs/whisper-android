@@ -52,7 +52,9 @@ Java_com_shippopotamus_whisper_JniWhisperInference_processAudio(
         jclass,
         jlong contextPtr,
         jfloatArray samples,
-        jint numThreads) {
+        jint numThreads,
+        jstring language,
+        jboolean translate) {
     auto * context = reinterpret_cast<whisper_context *>(contextPtr);
     if (context == nullptr) {
         throwIllegalState(env, "Whisper context is not initialized.");
@@ -75,17 +77,22 @@ Java_com_shippopotamus_whisper_JniWhisperInference_processAudio(
         return env->NewStringUTF("");
     }
 
+    const char * languageChars = language != nullptr ? env->GetStringUTFChars(language, nullptr) : nullptr;
+
     whisper_full_params params = whisper_full_default_params(WHISPER_SAMPLING_GREEDY);
     params.print_realtime = false;
     params.print_progress = false;
     params.print_timestamps = false;
     params.print_special = false;
-    params.translate = false;
-    params.language = "en";
+    params.translate = translate == JNI_TRUE;
+    params.language = languageChars != nullptr ? languageChars : "en";
     params.n_threads = std::max(1, static_cast<int>(numThreads));
 
     const int result = whisper_full(context, params, sampleData, sampleCount);
     env->ReleaseFloatArrayElements(samples, sampleData, JNI_ABORT);
+    if (languageChars != nullptr) {
+        env->ReleaseStringUTFChars(language, languageChars);
+    }
 
     std::string transcript;
     if (result == 0) {

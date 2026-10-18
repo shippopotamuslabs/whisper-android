@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "whisper-android"
 include(":whisper-android")
+include(":whisper-android-hilt")
