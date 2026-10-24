@@ -2,7 +2,7 @@
 agp = "9.4.1"
 kotlin = "2.3.21"
 ksp = "2.3.12"
-coreKtx = "1.18.0"
+coreKtx = "1.19.1"
 coroutinesVersion = "1.11.0"
 coroutinesTestVersion = "1.11.0"
 hilt = "2.59.2"
