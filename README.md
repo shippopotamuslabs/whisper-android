@@ -28,13 +28,11 @@ it still configures.
 
 ## Layout
 
-- `whisper-android/` is the core library. It has no Hilt and no app-framework
-  dependencies beyond AndroidX core and coroutines. Public API:
-  `WhisperEngine` / `WhisperParams` (implemented by `JniWhisperInference`)
-  and `AudioRecorder` (16 kHz mono mic capture as a `Flow<FloatArray>`).
-- `whisper-android-hilt/` holds optional Hilt bindings (`WhisperModule`
-  provides a singleton `WhisperEngine`). Only consumers that use Hilt need it.
-- `third_party/whisper.cpp/` is the pinned upstream submodule.
+| Module | What it is |
+| --- | --- |
+| `whisper-android/` | The core library. It has no Hilt and no app-framework dependencies beyond AndroidX core and coroutines. Public API: `WhisperEngine` / `WhisperParams` (implemented by `JniWhisperInference`) and `AudioRecorder` (16 kHz mono mic capture as a `Flow<FloatArray>`) |
+| `whisper-android-hilt/` | Optional Hilt bindings (`WhisperModule` provides a singleton `WhisperEngine`). Only consumers that use Hilt need it |
+| `third_party/whisper.cpp/` | The pinned upstream submodule |
 
 ## Consumption
 
@@ -66,10 +64,9 @@ implementation("com.shippopotamuslabs:whisper-android")
 
 ### Maven publishing (status)
 
-The library used to publish to the GitLab Package Registry of the old GitLab
-project. That registry went away in the move to GitHub, and no replacement
-publishing target is configured yet. Until one is, consume the library
-through the composite build above.
+The library used to ship as a published Maven artifact. No publishing
+target is configured today. Consume the library through the composite
+build above.
 
 ## Permissions
 
