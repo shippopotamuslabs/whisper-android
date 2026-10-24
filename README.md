@@ -64,10 +64,9 @@ implementation("com.shippopotamuslabs:whisper-android")
 
 ### Maven publishing (status)
 
-The library used to publish to the GitLab Package Registry of the old GitLab
-project. That registry went away in the move to GitHub, and no replacement
-publishing target is configured yet. Until one is, consume the library
-through the composite build above.
+The library used to ship as a published Maven artifact. No publishing
+target is configured today. Consume the library through the composite
+build above.
 
 ## Permissions
 
