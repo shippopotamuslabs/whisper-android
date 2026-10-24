@@ -28,13 +28,11 @@ it still configures.
 
 ## Layout
 
-- `whisper-android/` is the core library. It has no Hilt and no app-framework
-  dependencies beyond AndroidX core and coroutines. Public API:
-  `WhisperEngine` / `WhisperParams` (implemented by `JniWhisperInference`)
-  and `AudioRecorder` (16 kHz mono mic capture as a `Flow<FloatArray>`).
-- `whisper-android-hilt/` holds optional Hilt bindings (`WhisperModule`
-  provides a singleton `WhisperEngine`). Only consumers that use Hilt need it.
-- `third_party/whisper.cpp/` is the pinned upstream submodule.
+| Module | What it is |
+| --- | --- |
+| `whisper-android/` | The core library. It has no Hilt and no app-framework dependencies beyond AndroidX core and coroutines. Public API: `WhisperEngine` / `WhisperParams` (implemented by `JniWhisperInference`) and `AudioRecorder` (16 kHz mono mic capture as a `Flow<FloatArray>`) |
+| `whisper-android-hilt/` | Optional Hilt bindings (`WhisperModule` provides a singleton `WhisperEngine`). Only consumers that use Hilt need it |
+| `third_party/whisper.cpp/` | The pinned upstream submodule |
 
 ## Consumption
 
